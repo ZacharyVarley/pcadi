@@ -1,0 +1,42 @@
+{
+  "det_shape": [
+    60,
+    60
+  ],
+  "proj_center": [
+    0.4221,
+    0.2179,
+    0.4954
+  ],
+  "laue_group": 11,
+  "exp_dataset_ids": [
+    1,
+    5,
+    10
+  ],
+  "exp_stack_ns": [
+    4
+  ],
+  "dict_stack_ns": [
+    10
+  ],
+  "pc_stack_ns": [
+    10
+  ],
+  "pca_k": 64,
+  "dict_res_deg": 3.0,
+  "topk": 3,
+  "upscale": 2,
+  "ring_thick": 4,
+  "stack_offset_px": 20,
+  "rect_border": 1,
+  "load_cell": 14,
+  "load_border": 1,
+  "load_vpad": 4,
+  "load_c_list": [
+    8,
+    16
+  ],
+  "dot_cell": 32,
+  "seed": 42
+}
