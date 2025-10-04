@@ -8,7 +8,7 @@ from orix.plot import IPFColorKeyTSL
 
 # Import utilities for quaternion conversion
 import torch
-from ebsdtorch.s2_and_so3.orientations import qu2bu
+from torch import Tensor
 
 # Publication-quality settings
 DPI = 300
@@ -24,6 +24,54 @@ plt.rcParams.update(
 )
 
 
+@torch.jit.script
+def qu2bu(qu: Tensor) -> Tensor:
+    """
+    Convert rotations given as quaternions to Bunge angles (ZXZ Euler angles).
+
+    Args:
+        qu (Tensor): shape (..., 4) quaternions in the format (w, x, y, z).
+
+    Returns:
+        torch.Tensor: shape (..., 3) Bunge angles in radians.
+    """
+
+    bu = torch.empty(qu.shape[:-1] + (3,), dtype=qu.dtype, device=qu.device)
+
+    q03 = qu[..., 0] ** 2 + qu[..., 3] ** 2
+    q12 = qu[..., 1] ** 2 + qu[..., 2] ** 2
+    chi = torch.sqrt((q03 * q12))
+
+    mask_chi_zero = chi == 0
+    mA = (mask_chi_zero) & (q12 == 0)
+    mB = (mask_chi_zero) & (q03 == 0)
+    mC = ~mask_chi_zero
+
+    bu[mA, 0] = torch.atan2(-2 * qu[mA, 0] * qu[mA, 3], qu[mA, 0] ** 2 - qu[mA, 3] ** 2)
+    bu[mA, 1] = 0
+    bu[mA, 2] = 0
+
+    bu[mB, 0] = torch.atan2(2 * qu[mB, 1] * qu[mB, 2], qu[mB, 1] ** 2 - qu[mB, 2] ** 2)
+    bu[mB, 1] = torch.pi
+    bu[mB, 2] = 0
+
+    bu[mC, 0] = torch.atan2(
+        (qu[mC, 1] * qu[mC, 3] - qu[mC, 0] * qu[mC, 2]) / chi[mC],
+        (-qu[mC, 0] * qu[mC, 1] - qu[mC, 2] * qu[mC, 3]) / chi[mC],
+    )
+    bu[mC, 1] = torch.atan2(2 * chi[mC], q03[mC] - q12[mC])
+    bu[mC, 2] = torch.atan2(
+        (qu[mC, 0] * qu[mC, 2] + qu[mC, 1] * qu[mC, 3]) / chi[mC],
+        (qu[mC, 2] * qu[mC, 3] - qu[mC, 0] * qu[mC, 1]) / chi[mC],
+    )
+
+    # add 2pi to negative angles for first and last angles
+    bu[..., 0] = torch.where(bu[..., 0] < 0, bu[..., 0] + 2 * torch.pi, bu[..., 0])
+    bu[..., 2] = torch.where(bu[..., 2] < 0, bu[..., 2] + 2 * torch.pi, bu[..., 2])
+
+    return bu
+
+
 def quaternions_to_ipf_rgb(quaternions, grid_shape=(149, 200), symmetry=Oh):
     """
     Convert quaternions to IPF-Z RGB image.
@@ -36,7 +84,7 @@ def quaternions_to_ipf_rgb(quaternions, grid_shape=(149, 200), symmetry=Oh):
     Returns:
         (H, W, 3) RGB array in [0, 1]
     """
-    # Convert quaternions to Euler angles using ebsdtorch
+    # Convert quaternions to Bunge Euler angles
     qu_tensor = torch.from_numpy(quaternions.astype(np.float32))
     euler = qu2bu(qu_tensor).cpu().numpy()  # Bunge Euler angles in radians
 

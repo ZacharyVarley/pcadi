@@ -22,6 +22,14 @@ The PCA-DI method works by:
 
 This approach maintains indexing accuracy while dramatically reducing computational requirements.
 
+## Dependencies
+
+Install PyTorch version 2.0+ manually for your GPU / OS. Rest of the dependencies (for loading benchmarking datasets) via pip:
+
+```
+pip install kikuchipy seaborn
+```
+
 ## Repository Structure
 
 ```
