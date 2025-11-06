@@ -10,6 +10,9 @@ from orix.plot import IPFColorKeyTSL
 import torch
 from torch import Tensor
 
+# Import boundary map creation from figure_sigma_boundary_map
+from figure_sigma_boundary_map import create_boundary_map
+
 # Publication-quality settings
 DPI = 300
 plt.rcParams.update(
@@ -222,16 +225,17 @@ def create_ipf_grid(data_file, grid_shape=(149, 200), dtype_filter="FP32"):
                     ha="right",
                 )
 
-    # Handle column 4 (index 3): Reference scan and IPF key
+    # Handle column 4 (index 3): Reference scan, boundary map, and IPF key
     center_row = n_noise_levels // 2
+    last_row = n_noise_levels - 1
 
-    # Add reference scan (ground truth) to top row
+    # Add reference scan to top row
     ax_ref = axes[0][3]
     try:
         ref_ipf_map = quaternions_to_ipf_rgb(ref_oris, grid_shape=grid_shape)
         ax_ref.imshow(ref_ipf_map, interpolation="nearest")
         ax_ref.axis("off")
-        ax_ref.set_title("Ground Truth", fontsize=16, fontweight="bold", pad=10)
+        ax_ref.set_title("Reference", fontsize=16, fontweight="bold", pad=10)
     except Exception as e:
         print(f"Error processing reference orientations: {e}")
         ax_ref.text(
@@ -239,8 +243,41 @@ def create_ipf_grid(data_file, grid_shape=(149, 200), dtype_filter="FP32"):
         )
         ax_ref.axis("off")
 
-    # Add IPF color key in center row
-    ax_legend = axes[center_row][3]
+    # Add boundary map in center row (swapped position)
+    ax_boundary = axes[center_row][3]
+
+    print("Generating boundary map for grid...")
+    boundary_map, boundary_map_general, boundary_map_sigma3, boundary_map_sigma9 = (
+        create_boundary_map(
+            reference_orientations=ref_oris,
+            grid_shape=grid_shape,
+        )
+    )
+
+    # Create RGB image for boundary map: white background
+    H, W = grid_shape
+    rgb_boundary = np.ones((H, W, 3), dtype=np.float32)
+
+    # Black for general boundaries (>3°) - applied first so CSL colors can overwrite
+    rgb_boundary[boundary_map_general > 0] = [0.0, 0.0, 0.0]
+
+    # Red for Σ3 boundaries
+    rgb_boundary[boundary_map == 1] = [1.0, 0.0, 0.0]
+
+    # Blue for Σ9 boundaries
+    rgb_boundary[boundary_map == 2] = [0.0, 0.0, 1.0]
+
+    # Purple for both Σ3 and Σ9
+    rgb_boundary[boundary_map == 3] = [1.0, 0.0, 1.0]
+
+    ax_boundary.imshow(rgb_boundary, interpolation="nearest")
+    ax_boundary.axis("off")
+    ax_boundary.set_title(
+        "Reference Boundaries", fontsize=16, fontweight="bold", pad=10
+    )
+
+    # Add IPF color key in last row (swapped position)
+    ax_legend = axes[last_row][3]
     ipf_key = IPFColorKeyTSL(Oh)
     ipf_fig = ipf_key.plot(return_figure=True)
 
@@ -259,16 +296,16 @@ def create_ipf_grid(data_file, grid_shape=(149, 200), dtype_filter="FP32"):
 
     # Turn off all other axes in column 4
     for row_idx in range(n_noise_levels):
-        if row_idx != 0 and row_idx != center_row:
+        if row_idx != 0 and row_idx != center_row and row_idx != last_row:
             axes[row_idx][3].axis("off")
 
-    # Add overall title
-    fig.suptitle(
-        f"IPF-Z Maps",
-        fontsize=18,
-        fontweight="bold",
-        y=0.995,
-    )
+    # # Add overall title
+    # fig.suptitle(
+    #     f"IPF-Z Maps",
+    #     fontsize=18,
+    #     fontweight="bold",
+    #     y=0.995,
+    # )
 
     plt.tight_layout()
 

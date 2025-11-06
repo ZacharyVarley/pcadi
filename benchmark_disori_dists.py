@@ -54,10 +54,16 @@ elif n_noise_levels == 1:
     axes = [axes]
 
 # Colors for each method
+# colors = {
+#     "DI": "#2E86AB",  # Blue
+#     "PCA-512": "#A23B72",  # Purple
+#     "PCA-1024": "#F18F01",  # Orange
+# }
 colors = {
-    "DI": "#2E86AB",  # Blue
-    "PCA-512": "#A23B72",  # Purple
-    "PCA-1024": "#F18F01",  # Orange
+    # "DI": "#377eb8",  # Blue
+    "DI": "#000000",  # Black
+    "PCA-512": "#ff7f00",  # Orange
+    "PCA-1024": "#377eb8",  # Blue
 }
 
 # Line styles
@@ -245,7 +251,8 @@ for col_idx, noise_id in enumerate(unique_noise_ids):
     # Title with noise level
     noise_label = noise_labels.get(noise_id, f"ID {noise_id}")
     ax.set_title(
-        f"{noise_label} Noise ({smallest_res}° Dictionary)",
+        # f"{noise_label} Noise ({smallest_res}° Dictionary)",
+        f"{noise_label} Noise",
         fontsize=12,
         fontweight="bold",
     )
@@ -256,7 +263,7 @@ for col_idx, noise_id in enumerate(unique_noise_ids):
         ax.legend(
             loc="lower right",
             frameon=True,
-            framealpha=0.9,
+            framealpha=0.75,
             edgecolor="gray",
             fontsize=10,
         )

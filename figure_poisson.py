@@ -430,7 +430,23 @@ def create_combined_figure(
     line_styles = ["-", "--", "-.", ":"]
 
     # Extract colors via seaborn color palette
-    colors = sns.color_palette("colorblind", len(dictionary_sizes))
+    # colors = sns.color_palette("colorblind", len(dictionary_sizes))
+    colors = [
+        "#377eb8",
+        "#ff7f00",
+        "#4daf4a",
+        "#f781bf",
+        "#a65628",
+        "#984ea3",
+        "#999999",
+        "#e41a1c",
+        "#dede00",
+    ]
+    cmap = {
+        1_000: colors[2],
+        10_000: colors[1],
+        100_000: colors[0],
+    }
 
     # Plot for each dictionary size and noise level
     for i, size in enumerate(dictionary_sizes):
@@ -449,10 +465,9 @@ def create_combined_figure(
                 x_values,
                 captured_var,
                 linestyle=line_styles[j % len(line_styles)],
-                color=colors[i],
-                linewidth=1.5,
+                color=cmap[size],
                 label=label,
-                marker="o" if j == 0 else None,
+                marker=None,
                 markersize=2,
                 markevery=len(x_values) // 10,  # Show fewer markers
             )

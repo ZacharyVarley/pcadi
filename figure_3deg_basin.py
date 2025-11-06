@@ -177,6 +177,10 @@ def main():
     print("Building Scan 1 reference…")
     ref = build_reference(mp, geom, mask, device)
 
+    print("Scan 3: DI, refine…")
+    s3_start_o, s3_finish_o = start_finish(mp, geom, 3, mask, device, DICT_RES_START)
+    s3_start, s3_finish = disori_deg(ref, s3_start_o, s3_finish_o, LAUE_ID)
+
     print("Scan 5: DI, refine…")
     s5_start_o, s5_finish_o = start_finish(mp, geom, 5, mask, device, DICT_RES_START)
     s5_start, s5_finish = disori_deg(ref, s5_start_o, s5_finish_o, LAUE_ID)
@@ -186,6 +190,7 @@ def main():
     s10_start, s10_finish = disori_deg(ref, s10_start_o, s10_finish_o, LAUE_ID)
 
     # Binned curves (median + IQR)
+    x3, (mF3, lF3, uF3), (mI3, lI3, uI3) = binned_stats(s3_start, s3_finish)
     x5, (mF5, lF5, uF5), (mI5, lI5, uI5) = binned_stats(s5_start, s5_finish)
     x10, (mF10, lF10, uF10), (mI10, lI10, uI10) = binned_stats(s10_start, s10_finish)
 
@@ -196,6 +201,8 @@ def main():
     ax1.plot(
         [0, MAX_START], [0, MAX_START], lw=1.2, color="0.3", label="y = x (no change)"
     )
+    ax1.fill_between(x3, lF3, uF3, alpha=0.18, label="Scan 3 IQR")
+    ax1.plot(x3, mF3, lw=2.0, label="Scan 3 median")
     ax1.fill_between(x5, lF5, uF5, alpha=0.18, label="Scan 5 IQR")
     ax1.plot(x5, mF5, lw=2.0, label="Scan 5 median")
     ax1.fill_between(x10, lF10, uF10, alpha=0.18, label="Scan 10 IQR")
@@ -210,6 +217,8 @@ def main():
 
     # Right: improvement vs starting (start − finish); vertical line at 3°
     ax2.axhline(0.0, ls="--", lw=1.2, color="k")
+    ax2.fill_between(x3, lI3, uI3, alpha=0.18, label="Scan 3 IQR")
+    ax2.plot(x3, mI3, lw=2.0, label="Scan 3 median")
     ax2.fill_between(x5, lI5, uI5, alpha=0.18, label="Scan 5 IQR")
     ax2.plot(x5, mI5, lw=2.0, label="Scan 5 median")
     ax2.fill_between(x10, lI10, uI10, alpha=0.18, label="Scan 10 IQR")

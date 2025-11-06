@@ -2836,7 +2836,7 @@ def disorientation(quats1: Tensor, quats2: Tensor, laue_id_1: int, laue_id_2: in
     return output.reshape(data_shape)
 
 
-@torch.jit.script
+# @torch.jit.script # broadcast_shapes is not supported in torch.jit.script
 def disori_angle_laue(quats1: Tensor, quats2: Tensor, laue_id_1: int, laue_id_2: int):
     """
 
@@ -2849,24 +2849,18 @@ def disori_angle_laue(quats1: Tensor, quats2: Tensor, laue_id_1: int, laue_id_2:
         laue_id_2: laue group ID of quats2
 
     Returns:
-        disorientation quaternion of shape (..., 4)
+        disorientation angle in radians of shape (...,)
 
     """
 
     # get the important shapes
-    data_shape = quats1.shape
-
-    # check that the shapes are the same
-    if data_shape != quats2.shape:
-        raise ValueError(
-            f"quats1 and quats2 must have the same data shape, but got {data_shape} and {quats2.shape}"
-        )
+    data_shape = torch.broadcast_shapes(quats1.shape[:-1], quats2.shape[:-1])
 
     # multiply by inverse of second (without symmetry)
     misori_quats = qu_prod(quats1, qu_conj(quats2))
 
     # find the number of quaternions (generic input shapes are supported)
-    N = torch.prod(torch.tensor(data_shape[:-1]))
+    N = torch.prod(torch.tensor(misori_quats.shape[:-1]))
 
     # retrieve the laue group elements for the first quaternions
     laue_group_1 = laue_elements(laue_id_1).to(quats1.dtype).to(quats1.device)
@@ -2891,7 +2885,11 @@ def disori_angle_laue(quats1: Tensor, quats2: Tensor, laue_id_1: int, laue_id_2:
     # find the largest real part magnitude and return the angle
     cosine_half_angle = torch.max(equivalent_quat_pos_real, dim=-1).values
 
-    return 2.0 * torch.acos(cosine_half_angle.clamp_(-1.0, 1.0))
+    # get angle
+    angle = 2.0 * torch.acos(cosine_half_angle.clamp_(-1.0, 1.0))
+
+    # reshape to the broadcasted data shape
+    return angle.reshape(data_shape)
 
 
 @torch.jit.script
