@@ -83,7 +83,13 @@ python figure_stochastic_PCA.py  # Streaming PCA convergence
 If you use this code in your research, please cite:
 
 ```
-Coming soon.
+@article{varley2026accelerating,
+  title={Accelerating dictionary indexing of electron backscatter diffraction patterns with PCA and quantization},
+  author={Varley, Zachary T and Rohrer, Gregory S and De Graef, Marc},
+  journal={Scientific Reports},
+  year={2026},
+  publisher={Nature Publishing Group UK London}
+}
 ```
 
 This repository is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
